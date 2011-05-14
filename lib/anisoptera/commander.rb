@@ -34,9 +34,11 @@ module Anisoptera
     end
 
     def mime_type
-      'image/jpg'
+      Rack::Mime.mime_type File.extname(@original)
     end
     
+    # Utility method to test that all commands are working
+    #
     def to_file(path)
       File.open(path, 'w+') do |f|
         f.write(`#{command}`)

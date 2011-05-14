@@ -1,3 +1,4 @@
+require 'rack/mime'
 require 'anisoptera/commander'
 require 'anisoptera/serializer'
 

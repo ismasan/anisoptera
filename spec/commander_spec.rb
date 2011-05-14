@@ -61,5 +61,16 @@ describe Anisoptera::Commander do
     end
     
   end
+  
+  describe 'mime_type' do
+    before do
+      @commander = Anisoptera::Commander.new('/data').file('foo.png')
+    end
+    
+    it 'should get default from filename' do
+      @commander.mime_type.must_equal 'image/png'
+    end
+    
+  end
 
 end

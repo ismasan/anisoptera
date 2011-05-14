@@ -15,6 +15,7 @@ Gem::Specification.new do |s|
   s.rubyforge_project = "anisoptera"
   
   s.add_dependency 'eventmachine', ">= 0.12.10"
+  s.add_dependency 'rack', ">= 1.2.2"
   
   s.add_development_dependency "bundler", ">= 1.0.0"
   s.add_development_dependency "minitest"
