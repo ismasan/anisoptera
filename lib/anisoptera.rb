@@ -1,4 +1,5 @@
 require 'anisoptera/commander'
+require 'anisoptera/serializer'
 
 
 module Anisoptera
