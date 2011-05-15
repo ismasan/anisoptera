@@ -20,10 +20,12 @@ Anisoptera[:media].configure do |config|
   config.base_path = './'
 end
 
+Anisoptera.prefer_async = true
+
 
 routes = HttpRouter.new do
   
-  add('/media/:geometry/:color_mode/:filename').to Anisoptera[:media].end_point {|image, params|
+  add('/media/:geometry/:color_mode/:filename').to Anisoptera[:media].endpoint {|image, params|
     image.file(params[:filename]).thumb(params[:geometry])
     image.greyscale if params[:color_mode] == 'grey'
     image.encode('png')

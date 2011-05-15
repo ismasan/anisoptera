@@ -9,8 +9,8 @@ module Anisoptera
       block.call @config
     end
 
-    def end_point(&block)
-      EndPoint.new(@config, &block)
+    def endpoint(&block)
+      @endpoint ||= Anisoptera::Endpoint.factory(@config, block)
     end
 
   end

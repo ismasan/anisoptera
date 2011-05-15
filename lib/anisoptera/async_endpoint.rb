@@ -1,5 +1,4 @@
 require 'eventmachine'
-require 'ostruct'
 
 module Anisoptera
   
@@ -18,8 +17,10 @@ module Anisoptera
 
   end
 
-  class EndPoint
-
+  class AsyncEndpoint
+    
+    include Anisoptera::Endpoint
+    
     # This is a template async response.
     AsyncResponse = [-1, {}, []].freeze
 
@@ -27,15 +28,6 @@ module Anisoptera
       0   => 200,
       1   => 404
     }
-
-    HEADERS = {
-      'Cache-Control'   => 'public, max-age=3153600'
-    }.freeze
-
-    def initialize(config, &block)
-      @config = config
-      @handler = block
-    end
 
     def call(env)
 
@@ -51,7 +43,7 @@ module Anisoptera
 
       EM.system( convert.command ){ |output, status| 
         http_status = STATUSES[status.exitstatus]
-        headers = HEADERS.dup.update('Content-Type' => convert.mime_type)
+        headers = Anisoptera::HEADERS.dup.update('Content-Type' => convert.mime_type)
         env['async.callback'].call [http_status, headers, body]
         r = http_status == 200 ? output : 'NOT FOUND'
         body.call [r]
@@ -59,19 +51,6 @@ module Anisoptera
       }
 
       AsyncResponse
-    end
-    
-    private
-    
-    # Borrowed from Dragonfly
-    #
-    def routing_params(env)
-      env['rack.routing_args'] ||
-        env['action_dispatch.request.path_parameters'] ||
-        env['router.params'] ||
-        env['usher.params'] ||
-        env['dragonfly.params'] ||
-        raise(ArgumentError, "couldn't find any routing parameters in env #{env.inspect}")
     end
 
   end
