@@ -20,7 +20,7 @@ Anisoptera[:media].configure do |config|
   config.base_path = './'
 end
 
-Anisoptera.prefer_async = true
+# Anisoptera.prefer_async = false # uncomment this to test synchronous endpoint with any Rack server
 
 
 routes = HttpRouter.new do

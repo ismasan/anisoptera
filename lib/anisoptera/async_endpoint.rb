@@ -43,7 +43,7 @@ module Anisoptera
 
       EM.system( convert.command ){ |output, status| 
         http_status = STATUSES[status.exitstatus]
-        headers = Anisoptera::HEADERS.dup.update('Content-Type' => convert.mime_type)
+        headers = update_headers(convert)
         env['async.callback'].call [http_status, headers, body]
         r = http_status == 200 ? output : 'NOT FOUND'
         body.call [r]

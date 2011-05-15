@@ -10,7 +10,8 @@ module Anisoptera
       convert = @handler.call(job, params)
       
       result = `#{convert.command}`
-      headers = Anisoptera::HEADERS.dup.update('Content-Type' => convert.mime_type)
+      
+      headers = update_headers(convert)
       
       [200, headers, [result]]
     end

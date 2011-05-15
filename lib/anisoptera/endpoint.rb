@@ -3,8 +3,7 @@ module Anisoptera
   module Endpoint
     
     def self.factory(config, block)
-        
-      @end_point ||= if (defined?(EventMachine) && EventMachine.reactor_running?) && Anisoptera.prefer_async
+      @end_point ||= if defined?(EventMachine) && Anisoptera.prefer_async
         require 'anisoptera/async_endpoint'
         AsyncEndpoint.new(config, &block)
       else
@@ -29,6 +28,13 @@ module Anisoptera
         env['router.params'] ||
         env['usher.params'] ||
         raise(ArgumentError, "couldn't find any routing parameters in env #{env.inspect}")
+    end
+    
+    def update_headers(commander)
+      Anisoptera::HEADERS.dup.update(
+        'Content-Type' => commander.mime_type,
+        'X-Generator'  => self.class.name
+      )
     end
     
   end
