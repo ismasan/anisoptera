@@ -6,7 +6,7 @@ Borrows heavily from Dragonfly ([https://github.com/markevans/dragonfly](https:/
 
 Async mode relies on Thin's async.callback env variable and EventMachine.
 
-See [http_router](/examples/http_router.ru) example for an intro.
+See [http_router](/ismasan/anisoptera/blob/master/examples/http_router.ru) example for an intro.
 
 ## TODO
 
