@@ -71,7 +71,8 @@ module Anisoptera
     end
 
     def mime_type
-      Rack::Mime.mime_type File.extname(@original)
+      ext = @encode ? ".#{@encode}" : File.extname(@original) 
+      Rack::Mime.mime_type ext
     end
     
     # Utility method to test that all commands are working

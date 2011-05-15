@@ -76,6 +76,10 @@ describe Anisoptera::Commander do
       @commander.mime_type.must_equal 'image/png'
     end
     
+    it 'should use the one passed to #encode if provided' do
+      @commander.encode('gif').mime_type.must_equal 'image/gif'
+    end
+    
   end
 
 end
