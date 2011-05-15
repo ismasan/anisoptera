@@ -27,13 +27,13 @@ describe Anisoptera::Commander do
     
     describe 'resize' do
       it 'should add resize command' do
-        @commander.resize('10x10').command.must_equal 'convert /data/foo.jpg -resize 10x10 -'
+        @commander.thumb('10x10').command.must_equal "convert /data/foo.jpg -resize \"10x10\" -"
       end
     end
 
     describe 'crop' do
       it 'should add resize command' do
-        @commander.crop('120x120+10+5').command.must_equal 'convert /data/foo.jpg -crop 120x120+10+5 -'
+        @commander.thumb('120x120+10+5').command.must_equal "convert /data/foo.jpg -crop 120x120+10+5 +repage -"
       end
     end
     
@@ -53,10 +53,15 @@ describe Anisoptera::Commander do
       
       it 'should combine commands' do
         @commander.
-          resize('100x100#').
-          crop('120x120+10+5').
+          thumb('100x100#ne').
           encode('png').
-          command.must_equal 'convert /data/foo.jpg -resize 100x100# -crop 120x120+10+5 png:-'
+          command.must_equal "convert /data/foo.jpg -resize 100x100^^ -gravity NorthEast -crop 100x100+0+0 +repage png:-"
+      end
+      
+      it 'should accept - as gravity separator because the hash breaks browsers' do
+        @commander.
+          thumb('100x100-ne').
+          command.must_equal "convert /data/foo.jpg -resize 100x100^^ -gravity NorthEast -crop 100x100+0+0 +repage -"
       end
     end
     
