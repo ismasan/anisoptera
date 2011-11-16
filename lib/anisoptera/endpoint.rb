@@ -3,7 +3,7 @@ module Anisoptera
   module Endpoint
     
     def self.factory(config, block)
-      @end_point ||= if defined?(EventMachine) && Anisoptera.prefer_async
+      if defined?(EventMachine) && Anisoptera.prefer_async
         require 'anisoptera/async_endpoint'
         AsyncEndpoint.new(config, &block)
       else
