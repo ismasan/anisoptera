@@ -42,7 +42,6 @@ module Anisoptera
       EventMachine::next_tick { env['async.callback'].call [-1, {'Content-Type' => convert.mime_type}, body] }
       
       if @config.error_image && !job.check_file
-        p [:error, convert.command(@config.error_image)]
         EM.system( convert.command(@config.error_image) ){ |output, status| 
           env['async.callback'].call [404, {'Content-Type' => Rack::Mime.mime_type(::File.extname(@config.error_image))}, body]
           body.call [output]
