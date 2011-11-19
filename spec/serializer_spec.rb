@@ -8,14 +8,14 @@ describe Anisoptera::Serializer do
 
   describe "encoding" do
     it "must convert object into a string" do
-      @encoded.class.must_equal String
+      @encoded.class.should == String
     end
   end
   
   describe 'decoding' do
     it 'should recover original object' do
       decoded = Anisoptera::Serializer.marshal_decode(@encoded)
-      decoded.must_equal @data
+      decoded.should == @data
     end
   end
 

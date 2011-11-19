@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'rack', ">= 1.2.2"
   
   s.add_development_dependency "bundler", ">= 1.0.0"
-  s.add_development_dependency "minitest"
+  s.add_development_dependency "rspec"
 
   s.files         = `git ls-files`.split("\n")
   s.test_files    = `git ls-files -- {test,spec,features}/*`.split("\n")

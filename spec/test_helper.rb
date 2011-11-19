@@ -8,4 +8,4 @@ $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 require 'anisoptera'
 
 
-require 'minitest/autorun'
+require 'rspec'

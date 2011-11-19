@@ -11,12 +11,12 @@ describe Anisoptera::Commander do
     it 'must raise error if no file name given' do
       proc {
         @commander.command
-      }.must_raise ArgumentError
+      }.should raise_error(ArgumentError)
     end
     
     it 'must correct missing slashes' do
-      @commander.file('foo.jpg').command.must_match /^convert \/data\/foo\.jpg/
-      @commander.file('/foo.jpg').command.must_match /^convert \/data\/foo\.jpg/
+      @commander.file('foo.jpg').command.should match(/^convert \/data\/foo\.jpg/)
+      @commander.file('/foo.jpg').command.should match(/^convert \/data\/foo\.jpg/)
     end
   end
   
@@ -27,25 +27,25 @@ describe Anisoptera::Commander do
     
     describe 'resize' do
       it 'should add resize command' do
-        @commander.thumb('10x10').command.must_equal "convert /data/foo.jpg -resize \"10x10\" -"
+        @commander.thumb('10x10').command.should == "convert /data/foo.jpg -resize \"10x10\" -"
       end
     end
 
     describe 'crop' do
       it 'should add resize command' do
-        @commander.thumb('120x120+10+5').command.must_equal "convert /data/foo.jpg -crop 120x120+10+5 +repage -"
+        @commander.thumb('120x120+10+5').command.should == "convert /data/foo.jpg -crop 120x120+10+5 +repage -"
       end
     end
     
     describe 'encode' do
       it 'should add format arguments' do
-        @commander.encode('gif').command.must_equal 'convert /data/foo.jpg gif:-'
+        @commander.encode('gif').command.should == 'convert /data/foo.jpg gif:-'
       end
     end
     
     describe 'greyscale' do
       it 'should add colorspace argument' do
-        @commander.greyscale.command.must_equal 'convert /data/foo.jpg -colorspace Gray -'
+        @commander.greyscale.command.should == 'convert /data/foo.jpg -colorspace Gray -'
       end
     end
     
@@ -55,13 +55,13 @@ describe Anisoptera::Commander do
         @commander.
           thumb('100x100#ne').
           encode('png').
-          command.must_equal "convert /data/foo.jpg -resize 100x100^^ -gravity NorthEast -crop 100x100+0+0 +repage png:-"
+          command.should == "convert /data/foo.jpg -resize 100x100^^ -gravity NorthEast -crop 100x100+0+0 +repage png:-"
       end
       
       it 'should accept - as gravity separator because the hash breaks browsers' do
         @commander.
           thumb('100x100-ne').
-          command.must_equal "convert /data/foo.jpg -resize 100x100^^ -gravity NorthEast -crop 100x100+0+0 +repage -"
+          command.should == "convert /data/foo.jpg -resize 100x100^^ -gravity NorthEast -crop 100x100+0+0 +repage -"
       end
     end
     
@@ -73,11 +73,11 @@ describe Anisoptera::Commander do
     end
     
     it 'should get default from filename' do
-      @commander.mime_type.must_equal 'image/png'
+      @commander.mime_type.should == 'image/png'
     end
     
     it 'should use the one passed to #encode if provided' do
-      @commander.encode('gif').mime_type.must_equal 'image/gif'
+      @commander.encode('gif').mime_type.should == 'image/gif'
     end
     
   end
