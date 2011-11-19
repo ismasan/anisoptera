@@ -33,7 +33,8 @@ module Anisoptera
     def update_headers(commander)
       Anisoptera::HEADERS.dup.update(
         'Content-Type' => commander.mime_type,
-        'X-Generator'  => self.class.name
+        'X-Generator'  => self.class.name,
+        'Last-Modified' =>  Time.now.gmtime.strftime("%a, %d %b %Y %H:%M:%S GMT")
       )
     end
     
