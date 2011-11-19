@@ -83,7 +83,7 @@ module Anisoptera
       end
     end
 
-    def command
+    def command(file_path = full_file_path)
       raise ArgumentError, "no original file provided. Do commander.file('some_file.jpg')" unless @original
       cmd = []
       cmd << @geometry if @geometry
@@ -95,10 +95,18 @@ module Anisoptera
         cmd << '-'
       end
       
-      "convert #{File.join(@base_path, @original)} " + cmd.join(' ')
+      "convert #{file_path} " + cmd.join(' ')
+    end
+    
+    def check_file
+      ::File.exists?(full_file_path)
     end
     
     private
+    
+    def full_file_path
+      File.join(@base_path, @original)
+    end
     
     def resize(geometry)
       "-resize \"#{geometry}\""

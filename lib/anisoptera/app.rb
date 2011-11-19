@@ -1,6 +1,8 @@
 module Anisoptera
   class App
-
+    
+    attr_reader :config
+    
     def initialize
       @config = OpenStruct.new
     end
