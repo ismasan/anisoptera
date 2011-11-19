@@ -83,8 +83,9 @@ module Anisoptera
       end
     end
 
-    def command(file_path = full_file_path)
+    def command(file_path = nil)
       raise ArgumentError, "no original file provided. Do commander.file('some_file.jpg')" unless @original
+      file_path ||= full_file_path
       cmd = []
       cmd << @geometry if @geometry
       cmd << @greyscale if @greyscale
