@@ -23,6 +23,14 @@ Anisoptera[:media].configure do |config|
   config.base_path = './'
   # In case of error, resize and serve up this image
   config.error_image = './Error.gif'
+  # Run this block in case of error
+  config.on_error do |exception, params|
+    Airbrake.notify(
+        :error_class   => exception.class.name,
+        :error_message => exception.message,
+        :parameters    => params
+      )
+  end
 end
 
 # Create an app with defined routes

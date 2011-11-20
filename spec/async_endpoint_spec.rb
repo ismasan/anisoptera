@@ -154,7 +154,7 @@ describe 'Anisoptera::AsyncEndpoint' do
       get '/20x20/test.gif'
     end
     
-    it 'should reuturn status 500' do
+    it 'should return status 500' do
       last_response.status.should == 500
     end
     
@@ -181,7 +181,7 @@ describe 'Anisoptera::AsyncEndpoint' do
       get '/20x20/testfoo.gif'
     end
     
-    it 'should reuturn status 200 as set in config.error_status' do
+    it 'should return status 200 as set in config.error_status' do
       last_response.status.should == 200
     end
     
@@ -195,6 +195,47 @@ describe 'Anisoptera::AsyncEndpoint' do
     
     it 'should set X-Error header' do
       last_response.headers['X-Error'].should == 'Image not found'
+    end
+    
+  end
+  
+  describe 'with exceptions and config.on_error block' do
+    
+    before do
+      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
+      mock_time(@the_time)
+      
+      @error_message = ''
+      @error_params = nil
+      Anisoptera[:media].config.on_error do |exception, params|
+        @error_message = 'Oops!'
+        @error_params = params
+      end
+
+      @app = HttpRouter.new do
+        add('/:gg/:file').to Anisoptera[:media].endpoint {|image, params|
+          raise 'Oops!'
+        }
+      end
+      
+      get '/20x20/test.gif'
+    end
+    
+    it 'should have called error block' do
+      @error_message.should == 'Oops!'
+      @error_params.should == {:gg => '20x20', :file => 'test.gif'}
+    end
+    
+    it 'should have long-lived headers' do
+      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
+    end
+    
+    it 'should return Last-Modified header' do
+      last_response.headers['Last-Modified'].should == @the_time
+    end
+    
+    it 'should set X-Error header' do
+      last_response.headers['X-Error'].should == 'Oops!'
     end
     
   end

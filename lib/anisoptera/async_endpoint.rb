@@ -19,8 +19,9 @@ module Anisoptera
     def call(env)
       response = Thin::AsyncResponse.new(env)
       
+      params = routing_params(env)
+      
       begin
-        params = routing_params(env)
         job = Anisoptera::Commander.new( @config.base_path )
         convert = @handler.call(job, params)
         response.headers.update(update_headers(convert))
@@ -34,6 +35,7 @@ module Anisoptera
       rescue StandardError => boom
         response.headers['X-Error'] = boom.message
         response.headers.update(update_headers)
+        @config.on_error.call(boom, params) if @config.on_error
         handle_error(error_status(500), response)
       end
 
