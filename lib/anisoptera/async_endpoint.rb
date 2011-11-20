@@ -25,15 +25,16 @@ module Anisoptera
         convert = @handler.call(job, params)
         response.headers.update(update_headers(convert))
         
-        if !job.check_file          
-          handle_error 404, response, convert
+        if !job.check_file
+          response.headers['X-Error'] = 'Image not found'  
+          handle_error error_status(404), response, convert
         else
           handle_success response, convert
         end
       rescue StandardError => boom
         response.headers['X-Error'] = boom.message
         response.headers.update(update_headers)
-        handle_error(500, response)
+        handle_error(error_status(500), response)
       end
 
       response.finish
