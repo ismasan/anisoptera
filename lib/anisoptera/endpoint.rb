@@ -30,12 +30,13 @@ module Anisoptera
         raise(ArgumentError, "couldn't find any routing parameters in env #{env.inspect}")
     end
     
-    def update_headers(commander)
-      Anisoptera::HEADERS.dup.update(
-        'Content-Type' => commander.mime_type,
+    def update_headers(commander = nil)
+      heads = Anisoptera::HEADERS.dup.update(
         'X-Generator'  => self.class.name,
         'Last-Modified' =>  Time.now.gmtime.strftime("%a, %d %b %Y %H:%M:%S GMT")
       )
+      heads['Content-Type'] = commander.mime_type if commander
+      heads
     end
     
     def error_image

@@ -32,6 +32,7 @@ module Anisoptera
         end
       rescue StandardError => boom
         response.headers['X-Error'] = boom.message
+        response.headers.update(update_headers)
         handle_error(500, response)
       end
 

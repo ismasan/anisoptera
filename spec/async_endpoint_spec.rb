@@ -36,10 +36,7 @@ describe 'Anisoptera::AsyncEndpoint' do
   describe 'success' do
     before do
       @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      t = stub('Now')
-      Time.stub!(:now).and_return t
-      t.stub!(:gmtime).and_return t
-      t.should_receive(:strftime).with("%a, %d %b %Y %H:%M:%S GMT").and_return @the_time
+      mock_time(@the_time)
       get '/20x20/test.gif'
     end
     
@@ -51,12 +48,12 @@ describe 'Anisoptera::AsyncEndpoint' do
       last_response.headers["Cache-Control"].should == "public, max-age=3153600"
     end
     
-    it 'should return encoded content-type' do
-      last_response.headers['Content-Type'].should == 'image/jpeg'
-    end
-    
     it 'should return Last-Modified header' do
       last_response.headers['Last-Modified'].should == @the_time
+    end
+    
+    it 'should return encoded content-type' do
+      last_response.headers['Content-Type'].should == 'image/jpeg'
     end
     
     it 'should return resized image data' do
@@ -67,11 +64,21 @@ describe 'Anisoptera::AsyncEndpoint' do
   
   describe 'missing image' do
     before do
+      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
+      mock_time(@the_time)
       get '/20x20/testfoo.gif'
     end
     
     it 'should return status 404' do
       last_response.status.should == 404
+    end
+    
+    it 'should have long-lived headers' do
+      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
+    end
+    
+    it 'should return Last-Modified header' do
+      last_response.headers['Last-Modified'].should == @the_time
     end
     
     it 'should use default error image' do
@@ -83,12 +90,22 @@ describe 'Anisoptera::AsyncEndpoint' do
   
   describe 'missing image with error image configured' do
     before do
+      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
+      mock_time(@the_time)
       Anisoptera[:media].config.error_image = File.join($HERE, 'files', 'Chile.gif')
       get '/20x20/testfoo.gif'
     end
     
     it 'should return status 404' do
       last_response.status.should == 404
+    end
+    
+    it 'should have long-lived headers' do
+      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
+    end
+    
+    it 'should return Last-Modified header' do
+      last_response.headers['Last-Modified'].should == @the_time
     end
     
     it 'should use default error image' do
@@ -100,11 +117,21 @@ describe 'Anisoptera::AsyncEndpoint' do
   
   describe 'with malformed geometry' do
     before do
+      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
+      mock_time(@the_time)
       get '/20x20wtf/test.gif'
     end
     
     it 'should reuturn status 500' do
       last_response.status.should == 500
+    end
+    
+    it 'should have long-lived headers' do
+      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
+    end
+    
+    it 'should return Last-Modified header' do
+      last_response.headers['Last-Modified'].should == @the_time
     end
     
     it 'should set X-Error header' do
@@ -115,6 +142,9 @@ describe 'Anisoptera::AsyncEndpoint' do
   describe 'with exceptions in custom block' do
     
     before do
+      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
+      mock_time(@the_time)
+      
       @app = HttpRouter.new do
         add('/:g/:file').to Anisoptera[:media].endpoint {|image, params|
           raise 'Oops!'
@@ -126,6 +156,14 @@ describe 'Anisoptera::AsyncEndpoint' do
     
     it 'should reuturn status 500' do
       last_response.status.should == 500
+    end
+    
+    it 'should have long-lived headers' do
+      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
+    end
+    
+    it 'should return Last-Modified header' do
+      last_response.headers['Last-Modified'].should == @the_time
     end
     
     it 'should set X-Error header' do
