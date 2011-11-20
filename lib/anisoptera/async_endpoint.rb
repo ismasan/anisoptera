@@ -32,7 +32,7 @@ module Anisoptera
         else
           handle_success response, convert
         end
-      rescue StandardError => boom
+      rescue => boom
         response.headers['X-Error'] = boom.message
         response.headers.update(update_headers)
         @config.on_error.call(boom, params) if @config.on_error

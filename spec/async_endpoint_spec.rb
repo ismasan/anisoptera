@@ -199,6 +199,40 @@ describe 'Anisoptera::AsyncEndpoint' do
     
   end
   
+  describe 'with exceptions in custom block and custom error_status' do
+    
+    before do
+      Anisoptera[:media].config.error_status = 200
+      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
+      mock_time(@the_time)
+      
+      @app = HttpRouter.new do
+        add('/:g/:file').to Anisoptera[:media].endpoint {|image, params|
+          raise 'Oops!'
+        }
+      end
+      
+      get '/20x20/test.gif'
+    end
+    
+    it 'should return status 200' do
+      last_response.status.should == 200
+    end
+    
+    it 'should have long-lived headers' do
+      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
+    end
+    
+    it 'should return Last-Modified header' do
+      last_response.headers['Last-Modified'].should == @the_time
+    end
+    
+    it 'should set X-Error header' do
+      last_response.headers['X-Error'].should == 'Oops!'
+    end
+    
+  end
+  
   describe 'with exceptions and config.on_error block' do
     
     before do
