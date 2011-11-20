@@ -62,6 +62,17 @@ describe 'Anisoptera::AsyncEndpoint' do
     end
   end
   
+  describe 'with querystring' do
+    before do
+      get '/20x20/missing.gif?file=test.gif'
+    end
+    
+    it 'should have status 200' do
+      last_response.status.should == 200
+    end
+    
+  end
+  
   describe 'missing image' do
     before do
       @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"

@@ -23,11 +23,18 @@ module Anisoptera
     # Borrowed from Dragonfly
     #
     def routing_params(env)
-      env['rack.routing_args'] ||
+      pars = env['rack.routing_args'] ||
         env['action_dispatch.request.path_parameters'] ||
         env['router.params'] ||
         env['usher.params'] ||
         raise(ArgumentError, "couldn't find any routing parameters in env #{env.inspect}")
+      
+      # http_router doesn't parse querystring! Let's make sure we do
+      query = Rack::Utils.parse_nested_query(env["QUERY_STRING"]).inject({}) do |mem, (k,v)|
+        mem[k.to_sym] = v
+        mem
+      end
+      pars.update(query)
     end
     
     def update_headers(commander = nil)
