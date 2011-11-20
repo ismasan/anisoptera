@@ -38,6 +38,10 @@ module Anisoptera
       )
     end
     
+    def error_image
+      @config.error_image || ::File.join(File.dirname(__FILE__), 'error.png')
+    end
+    
   end
   
 end

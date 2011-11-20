@@ -1,21 +1,7 @@
 require 'eventmachine'
+require 'thin/async'
 
 module Anisoptera
-  
-  class DeferrableBody
-    include EventMachine::Deferrable
-
-    def call(body)
-      body.each do |chunk|
-        @body_callback.call(chunk)
-      end
-    end
-
-    def each &blk
-      @body_callback = blk
-    end
-
-  end
 
   class AsyncEndpoint
     
@@ -26,39 +12,56 @@ module Anisoptera
 
     STATUSES = {
       0   => 200,
-      1   => 500
+      1   => 500,
+      255 => 200 # exit status represented differently when running tests in editor
     }
 
     def call(env)
-
-      params = routing_params(env)
-
-      body = DeferrableBody.new
-
-      job = Anisoptera::Commander.new( @config.base_path )
-
-      convert = @handler.call(job, params)
+      response = Thin::AsyncResponse.new(env)
       
-      EventMachine::next_tick { env['async.callback'].call [-1, {'Content-Type' => convert.mime_type}, body] }
-      
-      if @config.error_image && !job.check_file
-        EM.system( convert.command(@config.error_image) ){ |output, status| 
-          env['async.callback'].call [404, {'Content-Type' => Rack::Mime.mime_type(::File.extname(@config.error_image))}, body]
-          body.call [output]
-          body.succeed
-        }
-      else
-        EM.system( convert.command ){ |output, status| 
-          http_status = STATUSES[status.exitstatus]
-          headers = update_headers(convert)
-          env['async.callback'].call [http_status, headers, body]
-          r = http_status == 200 ? output : 'SERVER ERROR'
-          body.call [r]
-          body.succeed
-        }
+      begin
+        params = routing_params(env)
+        job = Anisoptera::Commander.new( @config.base_path )
+        convert = @handler.call(job, params)
+        response.headers.update(update_headers(convert))
+        
+        if !job.check_file          
+          handle_error 404, response, convert
+        else
+          handle_success response, convert
+        end
+      rescue StandardError => boom
+        response.headers['X-Error'] = boom.message
+        handle_error(500, response)
       end
 
-      AsyncResponse
+      response.finish
+    end
+    
+    protected
+    
+    def handle_success(response, convert)
+      EM.system( convert.command ){ |output, status| 
+        http_status = STATUSES[status.exitstatus]
+        response.status = http_status
+        r = http_status == 200 ? output : 'SERVER ERROR'
+        response << r
+        response.done
+      }
+    end
+    
+    def handle_error(status, response, convert = nil)
+      response.status = status
+      response.headers['Content-Type'] = Rack::Mime.mime_type(::File.extname(error_image))
+      if convert # pass error image through original IM command
+        EM.system( convert.command(error_image) ){ |output, status| 
+          response << output
+          response.done
+        }
+      else # just blocking read because user handler blew up
+        response << ::File.read(error_image)
+        response.done
+      end
     end
 
   end

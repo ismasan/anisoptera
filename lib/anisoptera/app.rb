@@ -12,7 +12,7 @@ module Anisoptera
     end
 
     def endpoint(&block)
-      @endpoint ||= Anisoptera::Endpoint.factory(@config, block)
+      Anisoptera::Endpoint.factory(@config, block)
     end
 
   end

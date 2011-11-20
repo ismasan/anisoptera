@@ -65,7 +65,7 @@ module Anisoptera
           :y => $4,
           :gravity => $5
         )
-      else raise ArgumentError, "Didn't recognise the geometry string #{geometry}"
+      else raise ArgumentError, "Didn't recognise the geometry string #{geometry}."
       end
       self
     end
