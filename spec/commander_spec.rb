@@ -37,6 +37,25 @@ describe Anisoptera::Commander do
       end
     end
     
+    describe 'scale' do
+      it 'should add scale resize' do
+        @commander.thumb('50x50%').command.should == "convert /data/foo.jpg -resize \"50x50%\" -"
+      end
+    end
+    
+    describe 'bigger / smaller than' do
+      it 'should add < or >' do
+        @commander.thumb('400x300<').command.should == "convert /data/foo.jpg -resize \"400x300<\" -"
+        @commander.thumb('400x300>').command.should == "convert /data/foo.jpg -resize \"400x300>\" -"
+      end
+    end
+    
+    describe 'positioning (gravity)' do
+      it 'should resize with gravity' do
+        @commander.thumb('400x300#ne').command.should == "convert /data/foo.jpg -resize 400x300^^ -gravity NorthEast -crop 400x300+0+0 +repage -"
+      end
+    end
+    
     describe 'encode' do
       it 'should add format arguments' do
         @commander.encode('gif').command.should == 'convert /data/foo.jpg gif:-'
