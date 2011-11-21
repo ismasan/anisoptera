@@ -22,7 +22,7 @@ module Anisoptera
       params = routing_params(env)
       
       begin
-        job = Anisoptera::Commander.new( @config.base_path )
+        job = Anisoptera::Commander.new( @config.base_path, @config.convert_command )
         convert = @handler.call(job, params)
         response.headers.update(update_headers(convert))
         

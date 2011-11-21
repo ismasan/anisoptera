@@ -15,4 +15,5 @@ def mock_time(atime)
   Time.stub!(:now).and_return t
   t.stub!(:gmtime).and_return t
   t.should_receive(:strftime).with("%a, %d %b %Y %H:%M:%S GMT").and_return atime
+  atime
 end

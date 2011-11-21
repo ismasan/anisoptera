@@ -23,7 +23,8 @@ module Anisoptera
     CROPPED_RESIZE_GEOMETRY = /^(\d+)x(\d+)[#|-](\w{1,2})?$/ # e.g. '20x50#ne'
     CROP_GEOMETRY           = /^(\d+)x(\d+)([+-]\d+)?([+-]\d+)?(\w{1,2})?$/ # e.g. '30x30+10+10'
     
-    def initialize(base_path)
+    def initialize(base_path, convert_command = nil)
+      @convert_command = convert_command || 'convert'
       @base_path = base_path
       @original = nil
       @geometry = nil
@@ -96,7 +97,7 @@ module Anisoptera
         cmd << '-'
       end
       
-      "convert #{file_path} " + cmd.join(' ')
+      "#{@convert_command} #{file_path} " + cmd.join(' ')
     end
     
     def check_file

@@ -10,9 +10,7 @@ require "base64"
 
 $HERE = File.dirname(__FILE__)
 
-Anisoptera[:media].configure do |config|
-  config.base_path = File.join($HERE, 'files')
-end
+$CONVERT = "/usr/local/bin/convert"
 
 describe 'Anisoptera::AsyncEndpoint' do
   include Rack::Test::Methods
@@ -22,10 +20,17 @@ describe 'Anisoptera::AsyncEndpoint' do
   end
       
   before do
+    # redefine config each time to reset app
+    Anisoptera[:media].configure do |config|
+      config.base_path = File.join($HERE, 'files')
+      config.error_status = nil
+      config.error_image = nil
+      config.convert_command = $CONVERT
+    end
+    
     @app = HttpRouter.new do
       add('/:g/:file').to Anisoptera[:media].endpoint {|image, params|
         image_path = params[:file]
-        p [:serving, image_path]
         image.file(image_path).thumb(params[:g])
         image.greyscale if params[:grey]
         image.encode('jpg')
@@ -33,17 +38,12 @@ describe 'Anisoptera::AsyncEndpoint' do
     end
   end
   
-  describe 'success' do
-    before do
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
-      get '/20x20/test.gif'
-    end
+  shared_examples_for "a cached image" do |status, content_type|
     
     it 'should have status 200' do
-      last_response.status.should == 200
+      last_response.status.should == status
     end
-
+    
     it 'should have long-lived headers' do
       last_response.headers["Cache-Control"].should == "public, max-age=3153600"
     end
@@ -53,97 +53,71 @@ describe 'Anisoptera::AsyncEndpoint' do
     end
     
     it 'should return encoded content-type' do
-      last_response.headers['Content-Type'].should == 'image/jpeg'
+      last_response.headers['Content-Type'].should == content_type
+    end
+  end
+  
+  shared_examples_for 'resized image data' do |test_image, geometry, content_type|
+    it 'should return resized image data' do
+      tempimg = File.join($HERE, 'files', "temp.#{content_type}")
+      Base64.encode64(`#{$CONVERT} #{test_image} -resize \"#{geometry}\" #{tempimg}`)
+      Base64.encode64(last_response.body).should == Base64.encode64(File.read(tempimg))
+      File.unlink(tempimg)
+    end
+  end
+  
+  describe 'success' do
+    before do
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT") 
+      get '/20x20/test.gif'
     end
     
-    it 'should return resized image data' do
-      encoded = Base64.encode64(`convert #{File.join($HERE,'files','test.gif')} -resize \"20x20\" jpg:-`)
-      Base64.encode64(last_response.body).should == encoded
-    end
+    it_behaves_like 'a cached image', 200, 'image/jpeg'
+    
+    it_behaves_like 'resized image data', File.join($HERE,'files','test.gif'), '20x20', 'jpg'
+    
   end
   
   describe 'with querystring' do
     before do
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       get '/20x20/missing.gif?file=test.gif'
     end
     
-    it 'should have status 200' do
-      last_response.status.should == 200
-    end
+    it_behaves_like 'a cached image', 200, 'image/jpeg'
     
   end
   
   describe 'missing image' do
     before do
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       get '/20x20/testfoo.gif'
     end
     
-    it 'should return status 404' do
-      last_response.status.should == 404
-    end
+    it_behaves_like 'a cached image', 404, 'image/png'
     
-    it 'should have long-lived headers' do
-      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
-    end
-    
-    it 'should return Last-Modified header' do
-      last_response.headers['Last-Modified'].should == @the_time
-    end
-    
-    it 'should use default error image' do
-      last_response.headers['Content-Type'].should == 'image/png'
-      encoded = Base64.encode64(`convert #{File.join($HERE,'..','lib','anisoptera', 'error.png')} -resize \"20x20\" jpg:-`)
-      Base64.encode64(last_response.body).should == encoded
-    end
+    it_behaves_like 'resized image data', File.join($HERE,'..','lib','anisoptera', 'error.png'), '20x20', 'jpg'
   end
   
   describe 'missing image with error image configured' do
     before do
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       Anisoptera[:media].config.error_image = File.join($HERE, 'files', 'Chile.gif')
       get '/20x20/testfoo.gif'
     end
     
-    it 'should return status 404' do
-      last_response.status.should == 404
-    end
+    it_behaves_like 'a cached image', 404, 'image/gif'
     
-    it 'should have long-lived headers' do
-      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
-    end
-    
-    it 'should return Last-Modified header' do
-      last_response.headers['Last-Modified'].should == @the_time
-    end
-    
-    it 'should use default error image' do
-      last_response.headers['Content-Type'].should == 'image/gif'
-      encoded = Base64.encode64(`convert #{File.join($HERE,'files', 'Chile.gif')} -resize \"20x20\" jpg:-`)
-      Base64.encode64(last_response.body).should == encoded
-    end
+    it_behaves_like 'resized image data', File.join($HERE,'files', 'Chile.gif'), '20x20', 'jpg'
   end
   
   describe 'with malformed geometry' do
     before do
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       get '/20x20wtf/test.gif'
     end
     
-    it 'should reuturn status 500' do
-      last_response.status.should == 500
-    end
-    
-    it 'should have long-lived headers' do
-      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
-    end
-    
-    it 'should return Last-Modified header' do
-      last_response.headers['Last-Modified'].should == @the_time
-    end
+    it_behaves_like 'a cached image', 500, 'image/png'
     
     it 'should set X-Error header' do
       last_response.headers['X-Error'].should == "Didn't recognise the geometry string 20x20wtf."
@@ -153,8 +127,7 @@ describe 'Anisoptera::AsyncEndpoint' do
   describe 'with exceptions in custom block' do
     
     before do
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       
       @app = HttpRouter.new do
         add('/:g/:file').to Anisoptera[:media].endpoint {|image, params|
@@ -165,17 +138,7 @@ describe 'Anisoptera::AsyncEndpoint' do
       get '/20x20/test.gif'
     end
     
-    it 'should return status 500' do
-      last_response.status.should == 500
-    end
-    
-    it 'should have long-lived headers' do
-      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
-    end
-    
-    it 'should return Last-Modified header' do
-      last_response.headers['Last-Modified'].should == @the_time
-    end
+    it_behaves_like 'a cached image', 500, 'image/png'
     
     it 'should set X-Error header' do
       last_response.headers['X-Error'].should == 'Oops!'
@@ -185,24 +148,13 @@ describe 'Anisoptera::AsyncEndpoint' do
   
   describe 'with exceptions and custom config.error_status' do
     before do
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       Anisoptera[:media].config.error_status = 200
       
       get '/20x20/testfoo.gif'
     end
     
-    it 'should return status 200 as set in config.error_status' do
-      last_response.status.should == 200
-    end
-    
-    it 'should have long-lived headers' do
-      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
-    end
-    
-    it 'should return Last-Modified header' do
-      last_response.headers['Last-Modified'].should == @the_time
-    end
+    it_behaves_like 'a cached image', 200, 'image/png'
     
     it 'should set X-Error header' do
       last_response.headers['X-Error'].should == 'Image not found'
@@ -214,8 +166,7 @@ describe 'Anisoptera::AsyncEndpoint' do
     
     before do
       Anisoptera[:media].config.error_status = 200
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       
       @app = HttpRouter.new do
         add('/:g/:file').to Anisoptera[:media].endpoint {|image, params|
@@ -226,17 +177,7 @@ describe 'Anisoptera::AsyncEndpoint' do
       get '/20x20/test.gif'
     end
     
-    it 'should return status 200' do
-      last_response.status.should == 200
-    end
-    
-    it 'should have long-lived headers' do
-      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
-    end
-    
-    it 'should return Last-Modified header' do
-      last_response.headers['Last-Modified'].should == @the_time
-    end
+    it_behaves_like 'a cached image', 200, 'image/png'
     
     it 'should set X-Error header' do
       last_response.headers['X-Error'].should == 'Oops!'
@@ -247,8 +188,7 @@ describe 'Anisoptera::AsyncEndpoint' do
   describe 'with exceptions and config.on_error block' do
     
     before do
-      @the_time = "Sun, 20 Nov 2011 01:21:21 GMT"
-      mock_time(@the_time)
+      @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")
       
       @error_message = ''
       @error_params = nil
@@ -271,13 +211,7 @@ describe 'Anisoptera::AsyncEndpoint' do
       @error_params.should == {:gg => '20x20', :file => 'test.gif'}
     end
     
-    it 'should have long-lived headers' do
-      last_response.headers["Cache-Control"].should == "public, max-age=3153600"
-    end
-    
-    it 'should return Last-Modified header' do
-      last_response.headers['Last-Modified'].should == @the_time
-    end
+    it_behaves_like 'a cached image', 500, 'image/png'
     
     it 'should set X-Error header' do
       last_response.headers['X-Error'].should == 'Oops!'
