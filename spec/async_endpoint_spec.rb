@@ -192,9 +192,11 @@ describe 'Anisoptera::AsyncEndpoint' do
       
       @error_message = ''
       @error_params = nil
-      Anisoptera[:media].config.on_error do |exception, params|
+      @env = nil
+      Anisoptera[:media].config.on_error do |exception, params, env|
         @error_message = 'Oops!'
         @error_params = params
+        @env = env
       end
 
       @app = HttpRouter.new do
@@ -209,6 +211,7 @@ describe 'Anisoptera::AsyncEndpoint' do
     it 'should have called error block' do
       @error_message.should == 'Oops!'
       @error_params.should == {:gg => '20x20', :file => 'test.gif'}
+      @env['SCRIPT_NAME'].should == '/20x20/test.gif'
     end
     
     it_behaves_like 'a cached image', 500, 'image/png'

@@ -35,7 +35,7 @@ module Anisoptera
       rescue => boom
         response.headers['X-Error'] = boom.message
         response.headers.update(update_headers)
-        @config.on_error.call(boom, params) if @config.on_error
+        @config.on_error.call(boom, params, env) if @config.on_error
         handle_error(error_status(500), response)
       end
 
