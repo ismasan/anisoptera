@@ -4,7 +4,7 @@ In progress.
 
 Borrows heavily from Dragonfly ([https://github.com/markevans/dragonfly](https://github.com/markevans/dragonfly)).
 
-Async mode relies on Thin's async.callback env variable and EventMachine.
+Async mode relies on Thin's async.callback env variable and EventMachine, and ImageMagick for image processing.
 
 See [http_router](/ismasan/anisoptera/blob/master/examples/http_router.ru) example for an intro.
 
@@ -51,3 +51,32 @@ run app
 Run with Thin
 
     $ thin start -R image_resizer.ru -e production -p 5000
+    
+    
+Now you get on-the fly image resizes
+
+    http://some.host/media/100x100/grey/logo.png
+
+Anisoptera returns all the right HTTP headers so if you put this behind a caching proxy such as Varnish it should just work.
+
+## DoS protection
+
+Obviously it's a bad idea to allow people to freely resize images on the fly as it might bring your servers down. You can hash the parameters in the URL with a shared key and secret, something like:
+
+```ruby
+get('/media/:hash').to Anisoptera[:bootic].endpoint {|image, params|
+  verify_sha! params[:hash], params[:k]
+  
+  args = Anisoptera::Serializer.marshal_decode(params[:hash])
+  image_path = args[:file_name]
+  image.file(image_path).thumb(args[:geometry])
+  image.greyscale if args[:grey]
+  image.encode('jpg')
+}
+```
+
+Then you request images with passing a hash of parameters encoded with the shared secret, and a public key to decode it back.
+
+    http://some.host/media/BAh7CToGZiIVMjUzNjctaGVsbWV0LmpwZzoJZ3JleUY6DHNob3BfaWRpAeA6BmciDDIwMHgyMDA?k=6a58f9458425f73
+    
+Anisoptera::Serializer's encode and decode methods can help you Base64-encode a hash of parameters. This is also good because some ImageMagick geometry strings are not valid URL components.
