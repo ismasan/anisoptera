@@ -64,7 +64,7 @@ Anisoptera returns all the right HTTP headers so if you put this behind a cachin
 Obviously it's a bad idea to allow people to freely resize images on the fly as it might bring your servers down. You can hash the parameters in the URL with a shared key and secret, something like:
 
 ```ruby
-get('/media/:hash').to Anisoptera[:bootic].endpoint {|image, params|
+get('/media/:hash').to Anisoptera[:media].endpoint {|image, params|
   verify_sha! params[:hash], params[:k]
   
   args = Anisoptera::Serializer.marshal_decode(params[:hash])
