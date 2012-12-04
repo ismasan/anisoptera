@@ -52,12 +52,24 @@ Run with Thin
 
     $ thin start -R image_resizer.ru -e production -p 5000
     
-    
 Now you get on-the fly image resizes
 
     http://some.host/media/100x100/grey/logo.png
 
 Anisoptera returns all the right HTTP headers so if you put this behind a caching proxy such as Varnish it should just work.
+
+## Custom headers
+
+You can pass optional headers, or override default ones
+
+```ruby
+Anisoptera[:media].configure do |config|
+  config.headers = {
+    'Cache-Control' => '1234567890',
+    'X-Custom'      => 'Hello there'
+  }
+end
+```
 
 ## DoS protection
 
