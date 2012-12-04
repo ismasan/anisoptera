@@ -88,6 +88,40 @@ describe 'Anisoptera::AsyncEndpoint' do
     
   end
   
+  describe 'with custom headers' do
+    before do
+      # redefine config each time to reset app
+      Anisoptera[:custom].configure do |config|
+        config.base_path = File.join($HERE, 'files')
+        config.headers = {
+          'Cache-Control' => '1234567890',
+          'X-Custom'      => 'custom-head'
+        }
+      end
+
+      @app = HttpRouter.new do
+        add('/:g/:file').to Anisoptera[:custom].endpoint {|image, params|
+          image_path = params[:file]
+          image.file(image_path).thumb(params[:g])
+          image.encode('jpg')
+        }
+      end
+      
+      it 'should return encoded content-type' do
+        last_response.headers['Content-Type'].should == 'image/jpg'
+      end
+      
+      it 'should overwrite passed headers' do
+        last_response.headers['Cache-Control'].should == '1234567890'
+      end
+      
+      it 'should add passed new headers' do
+        last_response.headers['X-Custom'].should == 'custom-head'
+      end
+      
+    end
+  end
+  
   describe 'missing image' do
     before do
       @the_time = mock_time("Sun, 20 Nov 2011 01:21:21 GMT")

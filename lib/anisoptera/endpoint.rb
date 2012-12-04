@@ -42,6 +42,7 @@ module Anisoptera
         'X-Generator'  => self.class.name,
         'Last-Modified' =>  Time.now.gmtime.strftime("%a, %d %b %Y %H:%M:%S GMT")
       )
+      heads.update(@config.headers) if @config.headers && @config.headers.is_a?(Hash)
       heads['Content-Type'] = commander.mime_type if commander
       heads
     end
